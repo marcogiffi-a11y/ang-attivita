@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ANG-Attività">
+<meta name="theme-color" content="#1d3c6e">
+<title>ANG-Attività</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --blue:#1d3c6e;--blue2:#2a5298;--blue-light:#e8edf5;--blue-mid:#2d5a9e;
+  --green:#3d9140;--green2:#5cb85c;--green-light:#eaf6ea;--green-dark:#2d6b30;
+  --gray:#f2f4f7;--gray2:#e4e8f0;--gray3:#bdc5d4;
+  --text:#1a2340;--text2:#4a5568;--text3:#8a95a8;
+  --white:#ffffff;--red:#d63031;--orange:#e07820;
+  --ai:#6d28d9;--ai-light:#f0ebff;--ai-border:#d4bbff;
+  --radius:14px;--radius-sm:9px;
+  --shadow:0 2px 14px rgba(29,60,110,0.09);
+  --shadow-md:0 4px 24px rgba(29,60,110,0.14);
+}
+html,body{height:100%;background:var(--gray);font-family:'Poppins',sans-serif;color:var(--text)}
+.app{max-width:680px;margin:0 auto;padding:16px 14px 100px;min-height:100vh}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);border-radius:18px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 6px 28px rgba(29,60,110,0.28)}
+.header-brand{display:flex;align-items:center;gap:12px}
+.header-logo{width:44px;height:44px;border-radius:12px;overflow:hidden;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.header-logo img{width:100%;height:100%;object-fit:cover}
+.h-title{color:white;font-size:18px;font-weight:800;letter-spacing:-0.3px;line-height:1.1}
+.h-title span{color:var(--green2)}
+.h-sub{color:rgba(255,255,255,0.55);font-size:11px;margin-top:1px}
+.h-pct-n{color:var(--green2);font-size:26px;font-weight:800;line-height:1;text-align:right}
+.h-pct-l{color:rgba(255,255,255,0.45);font-size:10px;font-weight:500;text-align:right}
+.progress-wrap{background:rgba(255,255,255,0.15);border-radius:4px;height:4px;margin-top:8px;overflow:hidden;width:130px}
+.progress-fill{height:100%;background:var(--green2);border-radius:4px;transition:width 0.5s ease}
+
+/* TABS */
+.tabs{display:flex;gap:4px;background:var(--white);border-radius:var(--radius);padding:4px;box-shadow:var(--shadow);margin-bottom:14px}
+.tab{flex:1;padding:9px 8px;border:none;background:transparent;border-radius:10px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.tab.active{background:linear-gradient(135deg,var(--blue2),var(--blue));color:white;box-shadow:0 3px 10px rgba(29,60,110,0.25)}
+.tab:hover:not(.active){background:var(--gray);color:var(--text2)}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--white);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow)}
+.stat-n{font-size:22px;font-weight:800;color:var(--blue)}
+.stat-n.gn{color:var(--green-dark)} .stat-n.rd{color:var(--red)}
+.stat-l{font-size:10px;color:var(--text3);margin-top:1px;font-weight:500}
+
+/* ADD PANEL */
+.add-panel{background:var(--white);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow-md);border:2px solid var(--green2)}
+.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.panel-title{font-size:13px;font-weight:700;color:var(--blue);display:flex;align-items:center;gap:8px}
+.panel-title::before{content:'';display:block;width:4px;height:16px;background:linear-gradient(var(--green2),var(--green-dark));border-radius:2px}
+
+/* MIC */
+.mic-wrap{display:flex;flex-direction:column;align-items:center;gap:3px}
+.mic-big{width:58px;height:58px;border-radius:50%;border:3px solid var(--blue);background:var(--blue-light);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;transition:all 0.2s;flex-shrink:0}
+.mic-big:hover{background:var(--blue);color:white;transform:scale(1.06)}
+.mic-big.on{background:var(--red);border-color:var(--red);color:white;animation:pmic 1s infinite}
+@keyframes pmic{0%,100%{box-shadow:0 0 0 0 rgba(214,48,49,0.3)}50%{box-shadow:0 0 0 10px rgba(214,48,49,0)}}
+.mic-lbl{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:0.5px}
+.mic-lbl.on{color:var(--red)}
+.mic-banner{background:#fff3f3;border:1.5px solid #fcc;border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--red);display:none;align-items:center;gap:8px;font-weight:500}
+.mic-banner.show{display:flex}
+.mic-dot{width:7px;height:7px;background:var(--red);border-radius:50%;flex-shrink:0;animation:bd 0.9s infinite}
+@keyframes bd{0%,100%{opacity:1}50%{opacity:0.15}}
+
+/* FIELDS */
+.fl{font-size:11px;font-weight:600;color:var(--text3);margin-bottom:5px;letter-spacing:0.3px;text-transform:uppercase}
+.field{margin-bottom:13px}
+input[type=text],input[type=date],select{width:100%;background:var(--gray);border:1.5px solid var(--gray2);border-radius:var(--radius-sm);padding:11px 13px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:500;color:var(--text);outline:none;transition:border-color 0.15s,background 0.15s;appearance:none;-webkit-appearance:none}
+input[type=text]:focus,input[type=date]:focus,select:focus{border-color:var(--blue);background:var(--white)}
+input::placeholder{color:var(--text3);font-weight:400}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%238a95a8' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:13px}
+.r2ai{display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:13px;align-items:flex-end}
+
+/* AI */
+.btn-ai{background:var(--ai-light);color:var(--ai);border:1.5px solid var(--ai-border);border-radius:var(--radius-sm);padding:11px 14px;font-size:12px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:6px;white-space:nowrap;height:44px}
+.btn-ai:hover{background:var(--ai);color:white}
+.btn-ai:disabled{opacity:0.45;cursor:not-allowed}
+.ai-box{background:var(--ai-light);border:1.5px solid var(--ai-border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:13px;display:none;gap:10px}
+.ai-box.show{display:flex}
+.ai-ttl{font-size:11px;font-weight:700;color:var(--ai);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+.ai-txt{font-size:13px;color:var(--text2);line-height:1.5}
+.ai-badge{display:inline-flex;align-items:center;gap:5px;background:var(--ai);color:white;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;margin-top:7px;cursor:pointer;transition:opacity 0.15s}
+.ai-badge:hover{opacity:0.85}
+.ai-spin{width:13px;height:13px;border:2px solid var(--ai-border);border-top:2px solid var(--ai);border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SAVE BTN */
+.btn-save{background:linear-gradient(135deg,var(--blue2),var(--blue));color:white;border:none;border-radius:var(--radius-sm);padding:13px;font-size:14px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;width:100%;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(29,60,110,0.25)}
+.btn-save:hover{box-shadow:0 6px 22px rgba(29,60,110,0.35);transform:translateY(-1px)}
+.btn-save:active{transform:translateY(0)}
+.btn-save:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+
+/* FILTERS */
+.filters-wrap{background:var(--white);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.fl-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.filters{display:flex;gap:5px;flex-wrap:wrap}
+.fb{background:var(--gray);border:1.5px solid var(--gray2);color:var(--text2);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;transition:all 0.15s}
+.fb.active{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 2px 8px rgba(29,60,110,0.2)}
+.fb:hover:not(.active){border-color:var(--blue);color:var(--blue)}
+
+/* TASK LIST */
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 2px}
+.list-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px}
+.btn-clear{background:none;border:none;font-size:11px;color:var(--text3);cursor:pointer;font-family:'Poppins',sans-serif;font-weight:500}
+.btn-clear:hover{color:var(--red)}
+
+.task{background:var(--white);border-radius:var(--radius);padding:13px 14px;margin-bottom:7px;box-shadow:var(--shadow);border-left:4px solid var(--gray2);display:flex;align-items:center;gap:11px;transition:all 0.18s}
+.task:hover{box-shadow:var(--shadow-md);transform:translateX(2px)}
+.task.done{opacity:0.48;border-left-color:var(--green2)}
+.task.pa{border-left-color:var(--red)} .task.pm{border-left-color:var(--orange)} .task.pb{border-left-color:var(--green2)}
+.task.done .t-title{text-decoration:line-through;color:var(--text3)}
+.chk{width:22px;height:22px;border-radius:50%;border:2px solid var(--gray3);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;background:white}
+.chk:hover{border-color:var(--green2)}
+.chk.on{background:var(--green2);border-color:var(--green2)}
+.chk.on::after{content:'✓';font-size:11px;color:white;font-weight:700}
+.t-body{flex:1;min-width:0}
+.t-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px;line-height:1.3}
+.t-tags{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.tag{border-radius:6px;padding:2px 8px;font-size:10px;font-weight:600}
+.tc{background:var(--blue-light);color:var(--blue-mid)}
+.ta{background:#fff0f0;color:#b52828;border:1px solid #fcc}
+.tm{background:#fffaf0;color:#b05010;border:1px solid #fbd38d}
+.tb{background:var(--green-light);color:var(--green-dark);border:1px solid #b2dfb2}
+.tp{border:1px solid transparent}
+.td{font-size:10px;color:var(--text3);font-weight:500}
+.td.ov{color:var(--red);font-weight:600}
+.t-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:3px 6px;border-radius:5px;transition:all 0.1s;flex-shrink:0}
+.t-del:hover{background:#fff0f0;color:var(--red)}
+
+/* EMPTY */
+.empty{background:var(--white);border-radius:var(--radius);padding:44px 24px;text-align:center;box-shadow:var(--shadow)}
+.empty-ico{font-size:42px;margin-bottom:10px}
+.empty-t{font-size:15px;font-weight:700;color:var(--text)}
+.empty-s{font-size:12px;color:var(--text3);margin-top:4px}
+
+/* PAGINA PROGETTI */
+.page{display:none} .page.active{display:block}
+.sync-card{background:linear-gradient(135deg,var(--blue2),var(--blue));border-radius:var(--radius);padding:14px 18px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 4px 20px rgba(29,60,110,0.22)}
+.sync-info{color:white}
+.sync-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green2)}
+.sync-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-top:3px}
+.btn-sync{background:var(--green2);color:white;border:none;border-radius:var(--radius-sm);padding:9px 16px;font-size:12px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 0.15s;white-space:nowrap}
+.btn-sync:hover{background:var(--green-dark)}
+.proj-add{background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border:2px solid var(--blue-light)}
+.proj-add-title{font-size:12px;font-weight:700;color:var(--blue);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.4px}
+.r2p{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.proj-card{background:var(--white);border-radius:var(--radius);padding:14px 16px;margin-bottom:7px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;border-left:4px solid var(--blue)}
+.proj-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.proj-info{flex:1}
+.proj-name{font-size:14px;font-weight:700;color:var(--text)}
+.proj-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.proj-cnt{background:var(--blue-light);color:var(--blue-mid);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
+.proj-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:3px 6px;border-radius:5px;transition:all 0.1s}
+.proj-del:hover{color:var(--red)}
+
+/* LOADING OVERLAY */
+.loading-overlay{position:fixed;inset:0;background:var(--blue);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s}
+.loading-overlay.hide{opacity:0;pointer-events:none}
+.loading-logo{font-size:64px;font-weight:800;color:white;letter-spacing:-2px;margin-bottom:8px}
+.loading-logo span{color:var(--green2)}
+.loading-sub{color:rgba(255,255,255,0.5);font-size:13px;margin-bottom:24px}
+.loading-bar{width:160px;height:4px;background:rgba(255,255,255,0.2);border-radius:4px;overflow:hidden}
+.loading-bar-fill{height:100%;background:var(--green2);border-radius:4px;animation:lbar 1.5s ease-in-out infinite}
+@keyframes lbar{0%{width:0%;margin-left:0}50%{width:70%;margin-left:0}100%{width:0%;margin-left:100%}}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--blue);color:white;border-radius:30px;padding:11px 22px;font-size:13px;font-weight:600;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);z-index:999;pointer-events:none;white-space:nowrap;max-width:88vw;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,0.2)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.gn{background:var(--green-dark)} .toast.rd{background:var(--red)} .toast.ai{background:var(--ai)}
+
+@media(max-width:480px){
+  .r3{grid-template-columns:1fr 1fr;gap:8px}
+  .r3>:last-child{grid-column:span 2}
+  .r2p{grid-template-columns:1fr}
+  .app{padding:12px 10px 100px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-logo">ANG-<span>Attività</span></div>
+  <div class="loading-sub">Caricamento in corso...</div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+</div>
+
+<div class="app">
+
+  <div class="header">
+    <div class="header-brand">
+      <div class="header-logo"><img src="icon.png" alt="ANG" onerror="this.parentElement.innerHTML='<div style=\'width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#2a5298,#2d6b30);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:white\'>ANG</div>'"></div>
+      <div>
+        <div class="h-title">ANG-<span>Attività</span></div>
+        <div class="h-sub" id="hdr-sub">nessuna attività ancora</div>
+        <div class="progress-wrap"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="h-pct-n" id="hdr-pct">0%</div>
+      <div class="h-pct-l">completate</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showPage('tasks',this)">📋 Attività</button>
+    <button class="tab" onclick="showPage('projects',this)">📁 Progetti</button>
+  </div>
+
+  <!-- ATTIVITÀ -->
+  <div class="page active" id="page-tasks">
+    <div class="stats">
+      <div class="stat"><div class="stat-n" id="s-tot">0</div><div class="stat-l">📋 Totale</div></div>
+      <div class="stat"><div class="stat-n gn" id="s-done">0</div><div class="stat-l">✅ Completate</div></div>
+      <div class="stat"><div class="stat-n rd" id="s-pend">0</div><div class="stat-l">⏳ Da fare</div></div>
+    </div>
+
+    <div class="add-panel">
+      <div class="panel-header">
+        <div class="panel-title">Nuova attività</div>
+        <div class="mic-wrap">
+          <div class="mic-big" id="mic-btn" onclick="toggleMic()">🎤</div>
+          <div class="mic-lbl" id="mic-lbl">DETTA</div>
+        </div>
+      </div>
+      <div class="mic-banner" id="mic-banner">
+        <div class="mic-dot"></div>
+        <span>Sto ascoltando...</span>
+        <span style="font-style:italic;font-size:11px;color:var(--text2)" id="mic-int"></span>
+      </div>
+      <div class="field">
+        <div class="fl">📝 Titolo attività</div>
+        <input type="text" id="inp-title" placeholder="Cosa devi fare?">
+      </div>
+      <div class="r3">
+        <div>
+          <div class="fl">📁 Categoria</div>
+          <select id="inp-cat">
+            <option value="lavoro">💼 Lavoro</option>
+            <option value="personale">⭐ Personale</option>
+            <option value="casa">🏠 Casa</option>
+            <option value="salute">❤️ Salute</option>
+            <option value="altro">📌 Altro</option>
+          </select>
+        </div>
+        <div>
+          <div class="fl">🚦 Priorità</div>
+          <select id="inp-prio">
+            <option value="alta">🔴 Alta</option>
+            <option value="media" selected>🟡 Media</option>
+            <option value="bassa">🟢 Bassa</option>
+          </select>
+        </div>
+        <div>
+          <div class="fl">📅 Scadenza</div>
+          <input type="date" id="inp-date">
+        </div>
+      </div>
+      <div class="r2ai">
+        <div>
+          <div class="fl">📁 Progetto</div>
+          <select id="inp-proj"><option value="">— Nessun progetto —</option></select>
+        </div>
+        <div>
+          <div class="fl" style="opacity:0">·</div>
+          <button class="btn-ai" id="btn-ai" onclick="aiAssign()">🤖 AI</button>
+        </div>
+      </div>
+      <div class="ai-box" id="ai-box">
+        <span style="font-size:18px;flex-shrink:0">🤖</span>
+        <div id="ai-cnt"></div>
+      </div>
+      <button class="btn-save" id="btn-save" onclick="addTask()">
+        <span style="font-size:20px;line-height:1">＋</span> Salva Attività
+      </button>
+    </div>
+
+    <div class="filters-wrap">
+      <div class="fl-label">Filtra</div>
+      <div class="filters">
+        <button class="fb active" onclick="setF('all',this)">Tutte</button>
+        <button class="fb" onclick="setF('pending',this)">Da fare</button>
+        <button class="fb" onclick="setF('done',this)">Completate</button>
+        <button class="fb" onclick="setF('alta',this)">🔴 Alta</button>
+        <button class="fb" onclick="setF('lavoro',this)">💼 Lavoro</button>
+        <button class="fb" onclick="setF('personale',this)">⭐ Personale</button>
+        <button class="fb" onclick="setF('casa',this)">🏠 Casa</button>
+      </div>
+    </div>
+
+    <div class="list-header">
+      <div class="list-title" id="list-lbl">Attività</div>
+      <button class="btn-clear" onclick="clearDone()">Rimuovi completate</button>
+    </div>
+    <div id="task-list"></div>
+  </div>
+
+  <!-- PROGETTI -->
+  <div class="page" id="page-projects">
+    <div class="sync-card">
+      <div class="sync-info">
+        <div class="sync-title"><div class="sync-dot"></div> ANG Gest</div>
+        <div class="sync-sub" id="sync-sub">Sincronizza per importare i progetti</div>
+      </div>
+      <button class="btn-sync" onclick="syncANGGest()">🔄 Sincronizza</button>
+    </div>
+    <div class="proj-add">
+      <div class="proj-add-title">➕ Nuovo Progetto</div>
+      <div class="r2p">
+        <div><div class="fl">Nome</div><input type="text" id="proj-name" placeholder="Es: Cantiere Milano..."></div>
+        <div><div class="fl">Colore</div>
+          <select id="proj-color">
+            <option value="#1d3c6e">🔵 Blu</option>
+            <option value="#3d9140">🟢 Verde</option>
+            <option value="#d63031">🔴 Rosso</option>
+            <option value="#e07820">🟠 Arancio</option>
+            <option value="#6d28d9">🟣 Viola</option>
+            <option value="#0891b2">🩵 Azzurro</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-save" onclick="addProject()" style="padding:10px;font-size:13px">+ Aggiungi Progetto</button>
+    </div>
+    <div class="list-header">
+      <div class="list-title" id="proj-cnt-lbl">Progetti</div>
+      <div style="font-size:10px;color:var(--text3);font-weight:500">condivisi con ANG Gest</div>
+    </div>
+    <div id="proj-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIGURAZIONE SUPABASE
+// Sostituisci con i tuoi valori da Supabase Dashboard > Settings > API
+// ============================================================
+const SUPABASE_URL = 'https://TUOPROGETTO.supabase.co';
+const SUPABASE_ANON_KEY = 'TUALUNGA_ANON_KEY';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const USER_ID = 'default'; // puoi cambiarlo con auth utente reale
+
+let tasks=[], projects=[], filter='all', isLis=false, rec=null;
+
+// ---- SPEECH ----
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) {
+  document.getElementById('mic-btn').style.opacity='0.3';
+  document.getElementById('mic-btn').onclick=()=>toast('⚠️ Usa Chrome/Edge','rd');
+} else {
+  rec=new SR(); rec.lang='it-IT'; rec.continuous=false; rec.interimResults=true;
+  rec.onstart=()=>{ isLis=true; micUI(true); };
+  rec.onresult=(e)=>{
+    let int='',fin='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) fin+=e.results[i][0].transcript;
+      else int+=e.results[i][0].transcript;
+    }
+    if(fin){ const el=document.getElementById('inp-title'); el.value=(el.value+' '+fin).trim(); document.getElementById('mic-int').textContent=''; }
+    else document.getElementById('mic-int').textContent=int;
+  };
+  rec.onend=()=>{ isLis=false; micUI(false); };
+  rec.onerror=(e)=>{ isLis=false; micUI(false); if(e.error==='not-allowed') toast('⚠️ Permesso microfono negato','rd'); };
+}
+function micUI(on){
+  document.getElementById('mic-btn').className='mic-big'+(on?' on':'');
+  document.getElementById('mic-btn').textContent=on?'⏹':'🎤';
+  document.getElementById('mic-lbl').className='mic-lbl'+(on?' on':'');
+  document.getElementById('mic-lbl').textContent=on?'STOP':'DETTA';
+  document.getElementById('mic-banner').className='mic-banner'+(on?' show':'');
+  if(!on) document.getElementById('mic-int').textContent='';
+}
+function toggleMic(){ if(!rec)return; if(isLis) rec.stop(); else{ document.getElementById('inp-title').focus(); rec.start(); } }
+
+// ---- SUPABASE LOAD ----
+async function load(){
+  try{
+    const [{ data: att }, { data: proj }] = await Promise.all([
+      sb.from('attivita').select('*').eq('user_id', USER_ID).order('created_at', {ascending:false}),
+      sb.from('progetti').select('*').eq('user_id', USER_ID).order('created_at', {ascending:true})
+    ]);
+    tasks = (att||[]).map(r=>({
+      id: r.id, title: r.titolo, cat: r.categoria,
+      prio: r.priorita, date: r.scadenza||'',
+      proj: r.progetto_id||'', done: r.completata
+    }));
+    projects = (proj||[]).map(r=>({ id: r.id, name: r.nome, color: r.colore }));
+  } catch(e){ console.error(e); tasks=[]; projects=[]; }
+  renderProjSelect(); renderProjects(); render();
+  document.getElementById('loading').classList.add('hide');
+  setTimeout(()=>document.getElementById('loading').style.display='none', 400);
+}
+
+// ---- SUPABASE SYNC ANG GEST ----
+// ANG Gest salva i progetti nella tabella "progetti" con la stessa struttura.
+// Il tasto Sincronizza ricarica semplicemente i dati freschi da Supabase.
+async function syncANGGest(){
+  toast('🔄 Sincronizzazione...','');
+  try{
+    const { data } = await sb.from('progetti').select('*').order('created_at');
+    projects = (data||[]).map(r=>({ id: r.id, name: r.nome, color: r.colore }));
+    renderProjSelect(); renderProjects();
+    document.getElementById('sync-sub').textContent='Sync: '+new Date().toLocaleTimeString('it-IT');
+    toast('✅ Progetti aggiornati da ANG Gest','gn');
+  } catch(e){ toast('Errore sync','rd'); }
+}
+
+// ---- AI ASSIGN ----
+async function aiAssign(){
+  const title=document.getElementById('inp-title').value.trim();
+  if(!title){ toast('⚠️ Inserisci prima il titolo',''); return; }
+  if(!projects.length){ toast('ℹ️ Nessun progetto disponibile',''); return; }
+  const btn=document.getElementById('btn-ai');
+  btn.disabled=true;
+  document.getElementById('ai-box').className='ai-box show';
+  document.getElementById('ai-cnt').innerHTML='<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ai)"><div class="ai-spin"></div> Analisi in corso...</div>';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:250,
+        messages:[{role:'user',content:`Assegna questa attività al progetto più adatto.
+Attività: "${title}"
+Progetti: ${projects.map(p=>'"'+p.name+'"').join(', ')}
+Rispondi SOLO in JSON: {"progetto":"nome esatto o null","confidenza":"alta|media|bassa","motivo":"max 12 parole italiano"}`}]
+      })
+    });
+    const data=await res.json();
+    let txt=''; for(const c of data.content) if(c.type==='text') txt+=c.text;
+    const r=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    if(r.progetto){
+      const conf={'alta':'🟢 Alta','media':'🟡 Media','bassa':'🔴 Bassa'}[r.confidenza]||'';
+      document.getElementById('ai-cnt').innerHTML=`<div><div class="ai-ttl">Confidenza ${conf}</div><div class="ai-txt">${r.motivo}</div><div class="ai-badge" onclick="applyProj('${r.progetto.replace(/'/g,"\\'")}')">📁 ${esc(r.progetto)} — Clicca per assegnare</div></div>`;
+    } else {
+      document.getElementById('ai-cnt').innerHTML=`<div><div class="ai-ttl">AI</div><div class="ai-txt">Nessun progetto pertinente — salvata come attività semplice.</div></div>`;
+    }
+  } catch(e){ document.getElementById('ai-box').className='ai-box'; toast('Errore AI','rd'); }
+  btn.disabled=false;
+}
+function applyProj(name){
+  const sel=document.getElementById('inp-proj');
+  for(const o of sel.options) if(o.textContent.replace('📁 ','')===name){ sel.value=o.value; break; }
+  toast('✅ Progetto: '+name,'ai');
+}
+
+// ---- ADD TASK ----
+async function addTask(){
+  if(isLis){ rec.stop(); return; }
+  const title=document.getElementById('inp-title').value.trim();
+  if(!title){ toast('⚠️ Inserisci il titolo!',''); return; }
+  const btn=document.getElementById('btn-save');
+  btn.disabled=true;
+  try{
+    const row={
+      user_id: USER_ID, titolo: title,
+      categoria: document.getElementById('inp-cat').value,
+      priorita: document.getElementById('inp-prio').value,
+      scadenza: document.getElementById('inp-date').value||null,
+      progetto_id: document.getElementById('inp-proj').value||null,
+      completata: false
+    };
+    const { data, error }=await sb.from('attivita').insert([row]).select().single();
+    if(error) throw error;
+    tasks.unshift({ id:data.id, title:data.titolo, cat:data.categoria, prio:data.priorita, date:data.scadenza||'', proj:data.progetto_id||'', done:false });
+    document.getElementById('inp-title').value='';
+    document.getElementById('inp-date').value='';
+    document.getElementById('inp-proj').value='';
+    document.getElementById('ai-box').className='ai-box';
+    render(); renderProjects();
+    toast('✅ Attività aggiunta!','gn');
+    document.getElementById('inp-title').focus();
+  } catch(e){ toast('Errore salvataggio','rd'); }
+  btn.disabled=false;
+}
+
+// ---- TOGGLE DONE ----
+async function toggleDone(id){
+  const t=tasks.find(t=>t.id===id); if(!t)return;
+  t.done=!t.done; render();
+  await sb.from('attivita').update({completata:t.done}).eq('id',id);
+  renderProjects();
+}
+
+// ---- DELETE TASK ----
+async function delTask(id){
+  tasks=tasks.filter(t=>t.id!==id); render(); renderProjects();
+  await sb.from('attivita').delete().eq('id',id);
+  toast('🗑️ Eliminata','');
+}
+
+// ---- CLEAR DONE ----
+async function clearDone(){
+  const ids=tasks.filter(t=>t.done).map(t=>t.id);
+  if(!ids.length){ toast('Nessuna completata',''); return; }
+  tasks=tasks.filter(t=>!t.done); render(); renderProjects();
+  await sb.from('attivita').delete().in('id',ids);
+  toast('🧹 Rimosse '+ids.length+' attività','gn');
+}
+
+// ---- ADD PROJECT ----
+async function addProject(){
+  const name=document.getElementById('proj-name').value.trim();
+  if(!name){ toast('⚠️ Inserisci il nome',''); return; }
+  try{
+    const row={ id:'p'+Date.now(), user_id:USER_ID, nome:name, colore:document.getElementById('proj-color').value };
+    const { data, error }=await sb.from('progetti').insert([row]).select().single();
+    if(error) throw error;
+    projects.push({ id:data.id, name:data.nome, color:data.colore });
+    document.getElementById('proj-name').value='';
+    renderProjSelect(); renderProjects();
+    toast('📁 Progetto aggiunto!','gn');
+  } catch(e){ toast('Errore salvataggio progetto','rd'); }
+}
+
+// ---- DELETE PROJECT ----
+async function delProject(id){
+  tasks.forEach(t=>{ if(t.proj===id) t.proj=''; });
+  projects=projects.filter(p=>p.id!==id);
+  await Promise.all([
+    sb.from('attivita').update({progetto_id:null}).eq('progetto_id',id),
+    sb.from('progetti').delete().eq('id',id)
+  ]);
+  renderProjSelect(); renderProjects(); render();
+  toast('🗑️ Progetto eliminato','');
+}
+
+function setF(f,btn){ filter=f; document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }
+
+function renderProjSelect(){
+  const sel=document.getElementById('inp-proj'), cur=sel.value;
+  sel.innerHTML='<option value="">— Nessun progetto —</option>';
+  projects.forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent='📁 '+p.name; sel.appendChild(o); });
+  sel.value=cur;
+}
+function renderProjects(){
+  const el=document.getElementById('proj-list');
+  document.getElementById('proj-cnt-lbl').textContent=projects.length+' Progetti';
+  if(!projects.length){ el.innerHTML='<div class="empty"><div class="empty-ico">📁</div><div class="empty-t">Nessun progetto</div><div class="empty-s">Aggiungine uno o sincronizza da ANG Gest</div></div>'; return; }
+  el.innerHTML=projects.map(p=>{
+    const tc=tasks.filter(t=>t.proj===p.id).length;
+    const td=tasks.filter(t=>t.proj===p.id&&t.done).length;
+    return`<div class="proj-card" style="border-left-color:${p.color}">
+      <div class="proj-dot" style="background:${p.color}"></div>
+      <div class="proj-info"><div class="proj-name">${esc(p.name)}</div><div class="proj-meta">${tc} attività · ${td} completate</div></div>
+      <span class="proj-cnt">${tc}</span>
+      <button class="proj-del" onclick="delProject('${p.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+const catL={lavoro:'💼 Lavoro',personale:'⭐ Personale',casa:'🏠 Casa',salute:'❤️ Salute',altro:'📌 Altro'};
+const prioL={alta:'🔴 Alta',media:'🟡 Media',bassa:'🟢 Bassa'};
+const prioC={alta:'ta',media:'tm',bassa:'tb'};
+function isOv(d){ return d&&new Date(d)<new Date(new Date().toDateString()); }
+function fmt(d){ if(!d)return''; const[y,m,g]=d.split('-'); return`${g}/${m}/${y}`; }
+function getF(){ return tasks.filter(t=>{ if(filter==='all')return true; if(filter==='pending')return!t.done; if(filter==='done')return t.done; if(['alta','media','bassa'].includes(filter))return t.prio===filter; return t.cat===filter; }); }
+
+function render(){
+  const tot=tasks.length, done=tasks.filter(t=>t.done).length, pend=tot-done;
+  const pct=tot?Math.round((done/tot)*100):0;
+  document.getElementById('s-tot').textContent=tot;
+  document.getElementById('s-done').textContent=done;
+  document.getElementById('s-pend').textContent=pend;
+  document.getElementById('hdr-pct').textContent=pct+'%';
+  document.getElementById('prog').style.width=pct+'%';
+  document.getElementById('hdr-sub').textContent=tot?`${done} di ${tot} completate`:'nessuna attività ancora';
+  const fl=getF();
+  document.getElementById('list-lbl').textContent=fl.length+' Attività';
+  const el=document.getElementById('task-list');
+  if(!fl.length){ el.innerHTML=`<div class="empty"><div class="empty-ico">${filter==='done'?'🎉':'📋'}</div><div class="empty-t">${filter==='done'?'Nessuna completata':'Nessuna attività'}</div><div class="empty-s">${filter==='all'?'Aggiungi la prima attività!':'Cambia filtro'}</div></div>`; return; }
+  el.innerHTML=fl.map(t=>{
+    const ov=!t.done&&isOv(t.date);
+    const proj=t.proj?projects.find(p=>p.id===t.proj):null;
+    return`<div class="task${t.done?' done':''} p${t.prio[0]}">
+      <div class="chk${t.done?' on':''}" onclick="toggleDone(${t.id})"></div>
+      <div class="t-body">
+        <div class="t-title">${esc(t.title)}</div>
+        <div class="t-tags">
+          <span class="tag tc">${catL[t.cat]}</span>
+          <span class="tag ${prioC[t.prio]}">${prioL[t.prio]}</span>
+          ${proj?`<span class="tag tp" style="background:${proj.color}18;color:${proj.color};border-color:${proj.color}44">📁 ${esc(proj.name)}</span>`:''}
+          ${t.date?`<span class="td${ov?' ov':''}">${ov?'⚠️ SCADUTA ':'📅 '}${fmt(t.date)}</span>`:''}
+        </div>
+      </div>
+      <button class="t-del" onclick="delTask(${t.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showPage(page,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  btn.classList.add('active');
+}
+let _tt;
+function toast(msg,type){ const el=document.getElementById('toast'); el.textContent=msg; el.className='toast show'+(type?' '+type:''); clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),2800); }
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.activeElement.id==='inp-title') addTask();
+  if(e.key==='Enter'&&document.activeElement.id==='proj-name') addProject();
+});
+
+load();
+</script>
+</body>
+</html>
