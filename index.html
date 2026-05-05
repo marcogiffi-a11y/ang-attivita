@@ -410,12 +410,36 @@ async function load(){
 async function syncANGGest(){
   toast('🔄 Sincronizzazione...','');
   try{
-    const { data } = await sb.from('ang_attivita_progetti').select('*').order('created_at');
-    projects = (data||[]).map(r=>({ id: r.id, name: r.nome, color: r.colore }));
+    // Legge i progetti da ANG Gest (tabella originale)
+    const { data, error } = await sb.from('ang_attivita_progetti')
+      .select('id, numero_ordine, tipo_servizio')
+      .order('numero_ordine');
+    if(error) throw error;
+
+    const colori = ['#1d3c6e','#3d9140','#d63031','#e07820','#6d28d9','#0891b2'];
+    let added = 0;
+
+    for(const p of (data||[])){
+      const nome = p.numero_ordine || 'Progetto senza nome';
+      // Inserisce in ang_attivita_progetti se non esiste già
+      const exists = projects.find(x => x.id === p.id);
+      if(!exists){
+        const row = {
+          id: p.id,
+          user_id: USER_ID,
+          nome: nome,
+          colore: colori[added % colori.length]
+        };
+        await sb.from('ang_attivita_progetti').upsert([row]);
+        projects.push({ id: p.id, name: nome, color: row.colore });
+        added++;
+      }
+    }
+
     renderProjSelect(); renderProjects();
     document.getElementById('sync-sub').textContent='Sync: '+new Date().toLocaleTimeString('it-IT');
-    toast('✅ Progetti aggiornati da ANG Gest','gn');
-  } catch(e){ toast('Errore sync','rd'); }
+    toast(added>0 ? `✅ Importati ${added} progetti da ANG Gest` : '✅ Già aggiornato','gn');
+  } catch(e){ console.error(e); toast('Errore sync: '+e.message,'rd'); }
 }
 
 // ---- AI ASSIGN ----
