@@ -411,7 +411,7 @@ async function syncANGGest(){
   toast('🔄 Sincronizzazione...','');
   try{
     // Legge i progetti da ANG Gest (tabella originale)
-    const { data, error } = await sb.from('ang_attivita_progetti')
+    const { data, error } = await sb.from('progetti')
       .select('id, numero_ordine, tipo_servizio')
       .order('numero_ordine');
     if(error) throw error;
