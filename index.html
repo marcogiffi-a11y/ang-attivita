@@ -390,7 +390,7 @@ async function load(){
   try{
     const [{ data: att }, { data: proj }] = await Promise.all([
       sb.from('attivita').select('*').eq('user_id', USER_ID).order('created_at', {ascending:false}),
-      sb.from('progetti').select('*').eq('user_id', USER_ID).order('created_at', {ascending:true})
+      sb.from('ang_attivita_progetti').select('*').eq('user_id', USER_ID).order('created_at', {ascending:true})
     ]);
     tasks = (att||[]).map(r=>({
       id: r.id, title: r.titolo, cat: r.categoria,
@@ -410,7 +410,7 @@ async function load(){
 async function syncANGGest(){
   toast('🔄 Sincronizzazione...','');
   try{
-    const { data } = await sb.from('progetti').select('*').order('created_at');
+    const { data } = await sb.from('ang_attivita_progetti').select('*').order('created_at');
     projects = (data||[]).map(r=>({ id: r.id, name: r.nome, color: r.colore }));
     renderProjSelect(); renderProjects();
     document.getElementById('sync-sub').textContent='Sync: '+new Date().toLocaleTimeString('it-IT');
@@ -516,7 +516,7 @@ async function addProject(){
   if(!name){ toast('⚠️ Inserisci il nome',''); return; }
   try{
     const row={ id:'p'+Date.now(), user_id:USER_ID, nome:name, colore:document.getElementById('proj-color').value };
-    const { data, error }=await sb.from('progetti').insert([row]).select().single();
+    const { data, error }=await sb.from('ang_attivita_progetti').insert([row]).select().single();
     if(error) throw error;
     projects.push({ id:data.id, name:data.nome, color:data.colore });
     document.getElementById('proj-name').value='';
@@ -531,7 +531,7 @@ async function delProject(id){
   projects=projects.filter(p=>p.id!==id);
   await Promise.all([
     sb.from('attivita').update({progetto_id:null}).eq('progetto_id',id),
-    sb.from('progetti').delete().eq('id',id)
+    sb.from('ang_attivita_progetti').delete().eq('id',id)
   ]);
   renderProjSelect(); renderProjects(); render();
   toast('🗑️ Progetto eliminato','');
