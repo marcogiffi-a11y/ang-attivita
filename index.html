@@ -615,19 +615,14 @@ function startAutoSync(){
 
 async function autoSyncProjects(){
   try{
-    const {data}=await sb.from('progetti')
-      .select('id, numero_ordine, tipo_servizio, stato, clienti(nome)')
-      .order('numero_ordine');
-    const statoColori={'attivo':'#3d9140','da_iniziare':'#1d3c6e','completato':'#0891b2','sospeso':'#e07820','annullato':'#d63031'};
+    const {data}=await sb.from('progetti').select('id,numero_ordine').order('numero_ordine');
+    const colori=['#1d3c6e','#3d9140','#d63031','#e07820','#6d28d9','#0891b2'];
     let added=0;
     for(const p of (data||[])){
-      const cliente=p.clienti?.nome||'';
-      const nome=[cliente,p.numero_ordine].filter(Boolean).join(' — ');
-      const colore=statoColori[p.stato]||'#1d3c6e';
       if(!projects.find(x=>x.id===p.id)){
-        const row={id:p.id,user_id:currentUser.id,nome:nome,colore:colore};
+        const row={id:p.id,user_id:currentUser.id,nome:p.numero_ordine||'Progetto',colore:colori[added%colori.length]};
         await sb.from('ang_attivita_progetti').upsert([row]);
-        projects.push({id:p.id,name:nome,color:colore,servizio:p.tipo_servizio,stato:p.stato});
+        projects.push({id:p.id,name:row.nome,color:row.colore});
         added++;
       }
     }
@@ -649,37 +644,18 @@ async function refreshTasks(){
 async function syncANGGest(){
   toast('🔄 Sincronizzazione...','');
   try{
-    // Legge progetti con join clienti
-    const {data,error}=await sb.from('progetti')
-      .select('id, numero_ordine, tipo_servizio, stato, clienti(nome)')
-      .order('numero_ordine');
+    const {data,error}=await sb.from('progetti').select('id,numero_ordine,tipo_servizio').order('numero_ordine');
     if(error) throw error;
     const colori=['#1d3c6e','#3d9140','#d63031','#e07820','#6d28d9','#0891b2'];
-    // Colori per stato
-    const statoColori={'attivo':'#3d9140','da_iniziare':'#1d3c6e','completato':'#0891b2','sospeso':'#e07820','annullato':'#d63031'};
     let added=0;
     for(const p of (data||[])){
-      const cliente = p.clienti?.nome || '';
-      const servizio = p.tipo_servizio ? p.tipo_servizio.replace('_',' ') : '';
-      const stato = p.stato || '';
-      // Nome composto: Cliente — ORD + servizio
-      const nome = [cliente, p.numero_ordine].filter(Boolean).join(' — ');
-      const colore = statoColori[stato] || colori[added%colori.length];
+      const nome=p.numero_ordine||'Progetto senza nome';
       const exists=projects.find(x=>x.id===p.id);
       if(!exists){
-        const row={
-          id:p.id, user_id:currentUser.id,
-          nome: nome,
-          colore: colore
-        };
+        const row={id:p.id,user_id:currentUser.id,nome:nome,colore:colori[added%colori.length]};
         await sb.from('ang_attivita_progetti').upsert([row]);
-        projects.push({id:p.id, name:nome, color:colore, servizio, stato});
+        projects.push({id:p.id,name:nome,color:row.colore});
         added++;
-      } else {
-        // Aggiorna nome se cambiato
-        exists.name = nome;
-        exists.servizio = servizio;
-        exists.stato = stato;
       }
     }
     renderProjSelect(); renderProjects(); renderReport();
@@ -760,19 +736,7 @@ function renderProjects(){
   const el=document.getElementById('proj-list');
   document.getElementById('proj-cnt-lbl').textContent=projects.length+' Progetti';
   if(!projects.length){el.innerHTML='<div class="empty"><div class="empty-ico">📁</div><div class="empty-t">Nessun progetto</div><div class="empty-s">Aggiungine uno o sincronizza da ANG Gest</div></div>';return;}
-  el.innerHTML=projects.map(p=>{
-    const tc=tasks.filter(t=>t.proj===p.id).length,td=tasks.filter(t=>t.proj===p.id&&t.done).length;
-    const extraInfo=[p.servizio?p.servizio.replace('_',' '):'', p.stato||''].filter(Boolean).join(' · ');
-    return`<div class="proj-card" style="border-left-color:${p.color}">
-      <div class="proj-dot" style="background:${p.color}"></div>
-      <div class="proj-info">
-        <div class="proj-name">${esc(p.name)}</div>
-        <div class="proj-meta">${extraInfo ? extraInfo+' · ' : ''}${tc} attività · ${td} completate</div>
-      </div>
-      <span class="proj-cnt">${tc}</span>
-      <button class="proj-del" onclick="delProject('${p.id}')">✕</button>
-    </div>`;
-  }).join('');
+  el.innerHTML=projects.map(p=>{const tc=tasks.filter(t=>t.proj===p.id).length,td=tasks.filter(t=>t.proj===p.id&&t.done).length;return`<div class="proj-card" style="border-left-color:${p.color}"><div class="proj-dot" style="background:${p.color}"></div><div class="proj-info"><div class="proj-name">${esc(p.name)}</div><div class="proj-meta">${tc} attività · ${td} completate</div></div><span class="proj-cnt">${tc}</span><button class="proj-del" onclick="delProject('${p.id}')">✕</button></div>`;}).join('');
 }
 
 // ============================================================
